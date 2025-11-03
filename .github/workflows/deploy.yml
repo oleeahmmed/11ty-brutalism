@@ -4,43 +4,69 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:  # Manual deployment option
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     
     steps:
-    - name: 🔄 Checkout Repository
-      uses: actions/checkout@v3
-    
-    - name: 🟢 Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
-    
-    - name: 📦 Install Dependencies
-      run: npm install
-    
-    - name: 🏗️ Build 11ty Site
-      run: npm run build
-    
-    - name: 🚀 Deploy to cPanel
-      uses: SamKirkland/FTP-Deploy-Action@v4.3.6
-      with:
-        server: ${{ secrets.FTP_HOST }}
-        username: ${{ secrets.FTP_USERNAME }}
-        password: ${{ secrets.FTP_PASSWORD }}
-        protocol: ftps
-        port: 21
-        local-dir: ./_site/
-        server-dir: ./public_html/olee/
-        security: loose
-        exclude: |
-          **/.git*
-          **/.git*/**
-          **/node_modules/**
-          **/.DS_Store
-    
-    - name: ✅ Deployment Success
-      run: echo "🎉 Deployment completed successfully!"
+      - name: 🔄 Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: 📦 Install Dependencies
+        run: npm ci
+
+      - name: 🏗️ Build 11ty Site
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: 📝 Create .htaccess
+        run: |
+          cat > ./_site/.htaccess << 'EOF'
+          RewriteEngine On
+          RewriteBase /olee/
+          
+          RewriteCond %{REQUEST_FILENAME} !-d
+          RewriteCond %{REQUEST_URI} (.+)/$
+          RewriteRule ^ %1 [R=301,L]
+          
+          RewriteCond %{REQUEST_FILENAME} -d
+          RewriteCond %{REQUEST_URI} !(.*)/$
+          RewriteRule ^(.*)$ $1/ [R=301,L]
+          
+          RewriteCond %{REQUEST_FILENAME} !-f
+          RewriteCond %{REQUEST_FILENAME} !-d
+          RewriteRule ^(.*)$ index.html [L]
+          
+          Options -Indexes
+          AddDefaultCharset UTF-8
+          EOF
+
+      - name: 🚀 Deploy to cPanel
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          local-dir: ./_site/
+          server-dir: ./public_html/olee/
+          dangerous-clean-slate: true
+          security: loose
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/.DS_Store
+
+      - name: ✅ Deployment Success
+        run: echo "🎉 Site deployed at https://rs-db.fyi/olee/"

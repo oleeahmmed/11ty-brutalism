@@ -5,31 +5,43 @@ import pluginNavigation from "@11ty/eleventy-navigation";
 import yaml from "js-yaml";
 import pluginFilters from "./_config/filters.js";
 import htmlmin from "html-minifier-terser";
+
 export default async function(eleventyConfig) {
+	// Set pathPrefix for subdirectory deployment
+	eleventyConfig.setPathPrefix("/olee/");
+
 	eleventyConfig.addPreprocessor("drafts", "*", (data, content) => {
 		if(data.draft && process.env.ELEVENTY_RUN_MODE === "build") {
 			return false;
 		}
 	});
+
 	eleventyConfig
 		.addPassthroughCopy({
 			"./public/": "/"
 		})
 		.addPassthroughCopy("./content/feed/pretty-atom-feed.xsl");
+
 	eleventyConfig.addWatchTarget("content/**/*.{svg,webp,png,jpeg}");
+
 	eleventyConfig.addBundle("css", {
 		toFileDirectory: "dist",
 	});
+
 	eleventyConfig.addBundle("js", {
 		toFileDirectory: "dist",
 	});
+
     eleventyConfig.addDataExtension("yaml", (contents) => yaml.load(contents));
+
 	eleventyConfig.addPlugin(pluginSyntaxHighlight, {
 		preAttributes: { tabindex: 0 }
 	});
+
 	eleventyConfig.addPlugin(pluginNavigation);
 	eleventyConfig.addPlugin(HtmlBasePlugin);
 	eleventyConfig.addPlugin(InputPathToUrlTransformPlugin);
+
     eleventyConfig.addTransform("htmlmin", function(content, outputPath) {
         if (outputPath && outputPath.endsWith(".html")) {
         let minified = htmlmin.minify(content, {
@@ -41,6 +53,7 @@ export default async function(eleventyConfig) {
         }
         return content;
     });
+
 	eleventyConfig.addPlugin(feedPlugin, {
 		type: "atom", 
 		outputPath: "/feed/feed.xml",
@@ -59,15 +72,17 @@ export default async function(eleventyConfig) {
 			language: "en",
 			title: "Blog Title",
 			subtitle: "This is a longer description about your blog.",
-			base: "https://example.com/",
+			base: "https://rs-db.fyi/olee/",
 			author: {
 				name: "Your Name"
 			}
 		}
 	});
+
 	eleventyConfig.addPlugin(pluginFilters);
 	eleventyConfig.addPlugin(IdAttributePlugin, {
 	});
+
 	eleventyConfig.addShortcode("currentBuildDate", () => {
 		return (new Date()).toISOString();
 	});
@@ -89,4 +104,5 @@ export const config = {
 		data: "../_data",
 		output: "_site"
 	},
+	pathPrefix: "/olee/"
 };
