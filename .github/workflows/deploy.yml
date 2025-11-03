@@ -1,28 +1,32 @@
 name: Build and Deploy 11ty to cPanel via FTPS
+
 on:
   push:
     branches:
-      - main  # main branch push হলে workflow trigger হবে
+      - main
+  workflow_dispatch:  # Manual deployment option
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    
     steps:
-    - name: Checkout repository
+    - name: 🔄 Checkout Repository
       uses: actions/checkout@v3
-      
-    - name: Setup Node.js
+    
+    - name: 🟢 Setup Node.js
       uses: actions/setup-node@v3
       with:
         node-version: '18'
-        
-    - name: Install dependencies
-      run: npm install
-      
-    - name: Build 11ty
+        cache: 'npm'
+    
+    - name: 📦 Install Dependencies
+      run: npm ci
+    
+    - name: 🏗️ Build 11ty Site
       run: npm run build
-      
-    - name: Deploy to cPanel via FTPS
+    
+    - name: 🚀 Deploy to cPanel
       uses: SamKirkland/FTP-Deploy-Action@v4.3.6
       with:
         server: ${{ secrets.FTP_HOST }}
@@ -33,3 +37,11 @@ jobs:
         local-dir: ./_site/
         server-dir: ./public_html/11ty-brutalism/
         security: loose
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
+          **/.DS_Store
+    
+    - name: ✅ Deployment Success
+      run: echo "🎉 Deployment completed successfully!"
