@@ -1,0 +1,4 @@
+#cpanel
+url: https://p3plzcpnl508423.prod.phx3.secureserver.net:2083/
+username: fk5wqb7p6aba
+password: gXUN#U5lNuvK
