@@ -34,7 +34,7 @@ jobs:
         protocol: ftps
         port: 21
         local-dir: ./_site/
-        server-dir: ./public_html/11ty-brutalism/
+        server-dir: ./public_html/olee/
         security: loose
         exclude: |
           **/.git*
